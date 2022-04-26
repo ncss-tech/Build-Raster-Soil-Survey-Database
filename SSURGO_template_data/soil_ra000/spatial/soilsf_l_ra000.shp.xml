@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata xml:lang="en"><Esri><CreaDate>20220411</CreaDate><CreaTime>12031600</CreaTime><ArcGISFormat>1.0</ArcGISFormat><SyncOnce>TRUE</SyncOnce><DataProperties><lineage><Process ToolSource="c:\program files\arcgis\pro\Resources\ArcToolbox\toolboxes\Data Management Tools.tbx\Rename" Date="20220411" Time="120316">Rename D:\GIS\PROJECT_22\RSS_BUILD\SSURGO\soil_ra000\spatial\soilsf_l_dc001.shp D:\GIS\PROJECT_22\RSS_BUILD\SSURGO\soil_ra000\spatial\soilsf_l_ra000.shp ShapeFile</Process></lineage></DataProperties></Esri></metadata>
