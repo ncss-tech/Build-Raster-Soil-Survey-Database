@@ -1994,7 +1994,7 @@ def UpdateMetadata(outputWS, target, surveyInfo, description, remove_gp_history_
         # Get replacement value for the search words
         #
         stDict = StateNames()
-        st = os.path.basename(outputWS)[8:-4]
+        st = os.path.basename(outputWS)[4:-4]
 
         if st in stDict:
             # Get state name from the geodatabase
