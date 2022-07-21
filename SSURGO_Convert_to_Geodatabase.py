@@ -1895,7 +1895,7 @@ def GetXML(AOI):
 
         # Input XML workspace document used to create new gSSURGO schema in an empty geodatabase
 ##        if AOI == "Lower 48 States":
-        if AOI == "Unused for raster databases":
+        if AOI == "Unused for RSS databases":
             #inputXML = os.path.join(xmlPath, "gSSURGO_CONUS_AlbersNAD1983.xml")
             #PrintMsg(" \nUsing test xmlworkspacedocument for CONUS", 1)
             inputXML = os.path.join(xmlPath, "gSSURGO_CONUS_AlbersNAD1983.xml")
