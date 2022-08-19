@@ -1,32 +1,9 @@
-#-------------------------------------------------------------------------------
-# Name:        module1
-# Purpose:
-#
-# Author:      Charles.Ferguson
-#
-# Created:     16/05/2022
-# Copyright:   (c) Charles.Ferguson 2022
-# Licence:     <your licence>
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Aug 15 09:57:10 2022
 
-## original intent was to just use copy raster with arcpy.env settings all set to
-## be used by the tool.  These included snap raster, output coordinate systems,
-## cell size, geographic transformations, resampling method.  this did not work,
-## the cell alignment (snapping was off).  Below the input raster is reprojected
-## (whether it needs it or not) then the copy raster tool is used.  The copy raster
-## tool is the only tool that allows for pixel type transformation.
-#-------------------------------------------------------------------------------
-
-def errorMsg():
-    try:
-        excInfo = sys.exc_info()
-        tb = excInfo[2]
-        tbinfo = traceback.format_tb(tb)[0]
-        theMsg = tbinfo + " \n" + str(sys.exc_type)+ ": " + str(sys.exc_value) + " \n"
-        arcpy.AddMessage(theMsg)
-
-    except:
-        arcpy.AddMessage("Unhandled error in errorMsg method")
-
+@author: Charles.Ferguson
+"""
 def UpdateMetadata(gdb, target, surveyInfo, iRaster):
     #
     # Used for non-ISO metadata
@@ -44,7 +21,7 @@ def UpdateMetadata(gdb, target, surveyInfo, iRaster):
     # Search for keywords:  xxSTATExx, xxSURVEYSxx, xxTODAYxx, xxFYxx
     #
     try:
-        arcpy.AddMessage("\tUpdating raster metadata...")
+        PrintMsg("\tUpdating raster metadata...")
         arcpy.SetProgressor("default", "Updating raster metadata")
 
         # Set metadata translator file
@@ -57,9 +34,9 @@ def UpdateMetadata(gdb, target, surveyInfo, iRaster):
         mdImport = os.path.join(env.scratchFolder, "xxImport.xml")  # the metadata xml that will provide the updated info
         xmlPath = os.path.dirname(sys.argv[0])
         mdExport = os.path.join(xmlPath, "RSS_ClassRaster.xml") # original template metadata in script directory
-        arcpy.AddMessage(" \nParsing gSSURGO template metadata file: " + mdExport)
+        #PrintMsg(" \nParsing gSSURGO template metadata file: " + mdExport, 1)
 
-        #arcpy.AddMessage(" \nUsing SurveyInfo: " + str(surveyInfo), 1)
+        #PrintMsg(" \nUsing SurveyInfo: " + str(surveyInfo), 1)
 
         # Cleanup output XML files from previous runs
         if os.path.isfile(mdImport):
@@ -69,7 +46,7 @@ def UpdateMetadata(gdb, target, surveyInfo, iRaster):
         #
         stDict = StateNames()
         # st = os.path.basename(gdb)[8:-4]
-        st = os.path.basename(outDB)[4:-4]
+        st = os.path.basename(outputWS)[4:-4]
 
         if st in stDict:
             # Get state name from the geodatabase
@@ -79,14 +56,14 @@ def UpdateMetadata(gdb, target, surveyInfo, iRaster):
             # Leave state name blank. In the future it would be nice to include a tile name when appropriate
             mdState = ""
 
-        #arcpy.AddMessage(" \nUsing this string as a substitute for xxSTATExx: '" + mdState + "'", 1)
+        #PrintMsg(" \nUsing this string as a substitute for xxSTATExx: '" + mdState + "'", 1)
 
         # Set date strings for metadata, based upon today's date
         #
         d = datetime.date.today()
         today = str(d.isoformat().replace("-",""))
 
-        #arcpy.AddMessage(" \nToday replacement string: " + today, 1)
+        #PrintMsg(" \nToday replacement string: " + today, 1)
 
         # Set fiscal year according to the current month. If run during January thru September,
         # set it to the current calendar year. Otherwise set it to the next calendar year.
@@ -103,10 +80,10 @@ def UpdateMetadata(gdb, target, surveyInfo, iRaster):
         syr = str(now.year)
         smonth = str(now.month)
         if len(smonth) ==1:
-            smonth = smonth.zfill(2)
+            nth = smonth.zfill(2)
         fy = syr + smonth
 
-        #arcpy.AddMessage(" \nFY replacement string: " + str(fy), 1)
+        #PrintMsg(" \nFY replacement string: " + str(fy), 1)
 
         # Process gSSURGO_MapunitRaster.xml from script directory
         tree = ET.parse(mdExport)
@@ -120,13 +97,13 @@ def UpdateMetadata(gdb, target, surveyInfo, iRaster):
             # title, edition, issue
             #
             for child in citeInfo:
-                arcpy.AddMessage("\t\t" + str(child.tag))
+                PrintMsg("\t\t" + str(child.tag), 0)
 
                 if child.tag == "title":
                     if child.text.find('xxSTATExx') >= 0:
                         newTitle = "MapunitRaster " + str(iRaster) + "m - " + mdState
                         # newTitle = "Map Unit Raster " + str(iRaster) + "m - " + mdState
-                        #arcpy.AddMessage("\t\tUpdating title to: " + newTitle, 1)
+                        #PrintMsg("\t\tUpdating title to: " + newTitle, 1)
                         #child.text = child.text.replace('xxSTATExx', mdState)
                         child.text = newTitle
 
@@ -138,72 +115,72 @@ def UpdateMetadata(gdb, target, surveyInfo, iRaster):
 
                 elif child.tag == "edition":
                     if child.text == 'xxFYxx':
-                        #arcpy.AddMessage("\t\tReplacing xxFYxx", 1)
+                        #PrintMsg("\t\tReplacing xxFYxx", 1)
                         child.text = fy
 
                 elif child.tag == "serinfo":
                     for subchild in child.iter('issue'):
                         if subchild.text == "xxFYxx":
-                            #arcpy.AddMessage("\t\tReplacing xxFYxx", 1)
+                            #PrintMsg("\t\tReplacing xxFYxx", 1)
                             subchild.text = fy
 
         # Update place keywords
         ePlace = root.find('idinfo/keywords/place')
 
         if not ePlace is None:
-            arcpy.AddMessage("\t\tplace keywords")
+            PrintMsg("\t\tplace keywords", 0)
 
             for child in ePlace.iter('placekey'):
                 if child.text == "xxSTATExx":
-                    #arcpy.AddMessage("\t\tReplacing xxSTATExx", 1)
+                    #PrintMsg("\t\tReplacing xxSTATExx", 1)
                     child.text = mdState
 
-                elif child.text == "xxSURVEYSxx":
-                    #arcpy.AddMessage("\t\tReplacing xxSURVEYSxx", 1)
-                    child.text = mdState
+                # elif child.text == "xxSURVEYSxx":
+                #     #PrintMsg("\t\tReplacing xxSURVEYSxx", 1)
+                #     child.text = mdState
 
         # Update credits
         eIdInfo = root.find('idinfo')
         if not eIdInfo is None:
-            arcpy.AddMessage("\t\tcredits")
+            PrintMsg("\t\tcredits", 0)
 
             for child in eIdInfo.iter('datacred'):
                 sCreds = child.text
 
                 if sCreds.find("xxSTATExx") >= 0:
-                    #arcpy.AddMessage("\t\tcredits " + mdState, 0)
+                    #PrintMsg("\t\tcredits " + mdState, 0)
                     child.text = child.text.replace("xxSTATExx", mdState)
-                    #arcpy.AddMessage("\t\tReplacing xxSTATExx", 1)
+                    #PrintMsg("\t\tReplacing xxSTATExx", 1)
 
                 if sCreds.find("xxFYxx") >= 0:
-                    #arcpy.AddMessage("\t\tcredits " + fy, 0)
+                    #PrintMsg("\t\tcredits " + fy, 0)
                     child.text = child.text.replace("xxFYxx", fy)
-                    #arcpy.AddMessage("\t\tReplacing xxFYxx", 1)
+                    #PrintMsg("\t\tReplacing xxFYxx", 1)
 
                 if sCreds.find("xxTODAYxx") >= 0:
-                    #arcpy.AddMessage("\t\tcredits " + today, 0)
+                    #PrintMsg("\t\tcredits " + today, 0)
                     child.text = child.text.replace("xxTODAYxx", today)
-                    #arcpy.AddMessage("\t\tReplacing xxTODAYxx", 1)
+                    #PrintMsg("\t\tReplacing xxTODAYxx", 1)
 
         idPurpose = root.find('idinfo/descript/purpose')
 
         if not idPurpose is None:
-            arcpy.AddMessage("\t\tpurpose")
+            PrintMsg("\t\tpurpose", 0)
 
             ip = idPurpose.text
 
             if ip.find("xxFYxx") >= 0:
                 idPurpose.text = ip.replace("xxFYxx", fy)
-                #arcpy.AddMessage("\t\tReplacing xxFYxx", 1)
+                #PrintMsg("\t\tReplacing xxFYxx", 1)
 
         # Update process steps
         eProcSteps = root.findall('dataqual/lineage/procstep')
 
         if not eProcSteps is None:
-            arcpy.AddMessage("\t\tprocess steps")
+            PrintMsg("\t\tprocess steps", 0)
             for child in eProcSteps:
                 for subchild in child.iter('procdesc'):
-                    #arcpy.AddMessage("\t\t" + subchild.tag + "\t" + subchild.text, 0)
+                    #PrintMsg("\t\t" + subchild.tag + "\t" + subchild.text, 0)
                     procText = subchild.text
 
                     if procText.find('xxTODAYxx') >= 0:
@@ -211,13 +188,13 @@ def UpdateMetadata(gdb, target, surveyInfo, iRaster):
 
                     if procText.find("xxSTATExx") >= 0:
                         subchild.text = subchild.text.replace("xxSTATExx", mdState)
-                        #arcpy.AddMessage("\t\tReplacing xxSTATExx", 1)
+                        #PrintMsg("\t\tReplacing xxSTATExx", 1)
 
                     if procText.find("xxFYxx") >= 0:
                         subchild.text = subchild.text.replace("xxFYxx", fy)
-                        #arcpy.AddMessage("\t\tReplacing xxFYxx", 1)
+                        #PrintMsg("\t\tReplacing xxFYxx", 1)
 
-        #arcpy.AddMessage(" \nSaving template metadata to " + mdImport, 1)
+        #PrintMsg(" \nSaving template metadata to " + mdImport, 1)
 
         #  create new xml file which will be imported, thereby updating the table's metadata
         tree.write(mdImport, encoding="utf-8", xml_declaration=None, default_namespace=None, method="xml")
@@ -225,13 +202,13 @@ def UpdateMetadata(gdb, target, surveyInfo, iRaster):
         # import updated metadata to the geodatabase table
         # Using three different methods with the same XML file works for ArcGIS 10.1
         #
-        #arcpy.AddMessage(" \nImporting metadata " + mdImport + " to " + target, 1)
+        #PrintMsg(" \nImporting metadata " + mdImport + " to " + target, 1)
         arcpy.MetadataImporter_conversion(mdImport, target)  # This works. Raster now has metadata with 'XX keywords'. Is this step neccessary to update the source information?
 
         if not arcpy.Exists(target):
-            raise errorMsg + "Missing xml file to import as metadata: " + target
+            raise MyError, "Missing xml file to import as metadata: " + target
 
-        arcpy.AddMessage(" \nUpdating metadata for " + target + " using file: " + mdImport)
+        PrintMsg(" \nUpdating metadata for " + target + " using file: " + mdImport, 1)
         arcpy.ImportMetadata_conversion(mdImport, "FROM_FGDC", target, "DISABLED")  # Tool Validate problem here
         #arcpy.MetadataImporter_conversion(target, mdImport) # Try this alternate tool with Windows 10.
 
@@ -253,16 +230,16 @@ def UpdateMetadata(gdb, target, surveyInfo, iRaster):
 
         env.workspace = currentWS
 
-        # return True
+        return True
 
-    # except errorMsg(), e:
-    #     # Example: raise MyError, "This is an error message"
-    #     arcpy.AddMessage(str(e), 2)
-    #     return False
+    except MyError, e:
+        # Example: raise MyError, "This is an error message"
+        PrintMsg(str(e), 2)
+        return False
 
-    except Exception as e:
-        arcpy.AddMessage(e)
-
+    except:
+        errorMsg()
+        False
         
 def StateNames():
     # Create dictionary object containing list of state abbreviations and their names that
@@ -332,66 +309,5 @@ def StateNames():
         return stDict
 
     except:
-        arcpy.AddError("\tFailed to create list of state abbreviations (CreateStateList)", 2)
+        PrintMsg("\tFailed to create list of state abbreviations (CreateStateList)", 2)
         return stDict
-
-import arcpy, sys, os, traceback, datetime
-from arcpy import env
-import xml.etree.cElementTree as ET
-
-
-try:
-
-    model_raster = arcpy.GetParameterAsText(0)
-    outDB = arcpy.GetParameterAsText(1)
-    state = arcpy.GetParameterAsText(2)
-
-    ##set the snap raster environment
-    loc = sys.argv[0]
-    snap_dir = os.path.dirname(loc)
-    snap = os.path.join(snap_dir, "RSS_gSSURGO_snap.tif")
-    # arcpy.AddMessage(snap)
-    arcpy.env.snapRaster = snap
-
-    ##spatial reference
-    osr = arcpy.SpatialReference(5070)
-    arcpy.env.outputCoordinateSystem = osr
-
-    ##resampling method
-    arcpy.env.resamplingMethod = "NEAREST"
-
-    desc = arcpy.Describe(model_raster)
-    cp = desc.catalogPath
-
-
-    # state = os.path.basename(outDB)[-6:-4]
-
-    RBdesc = arcpy.Describe(os.path.join(cp, "Band_1"))
-    if RBdesc.meanCellHeight != 10.0 or RBdesc.meanCellWidth != 10.0:
-        arcpy.env.cellSize = 10
-
-
-    sr = desc.spatialReference
-    # arcpy.AddMessage(sr.GCS.name)
-    if sr.GCS.name == "GCS_WGS_1984":
-        tm = "WGS_1984_(ITRF00)_To_NAD_1983"
-        arcpy.management.ProjectRaster(model_raster, outDB + os.sep + "temp_raster_10m_" + state, osr, "NEAREST", 10, tm, None, None, None )
-
-    elif sr.GCS.name == "GCS_North_American_1983":
-        # no trannsformation needed
-        arcpy.management.ProjectRaster(model_raster, outDB + os.sep + "temp_raster_10m_" + state, osr, "NEAREST", 10, None, None, None, None )
-
-    arcpy.management.CopyRaster(outDB + os.sep + "temp_raster_10m_" + state, outDB + os.sep + "MapunitRaster_10m_" + state, None, None, None, None, None, "32_BIT_UNSIGNED")
-
-    arcpy.management.Delete(outDB + os.sep + "temp_raster_10m_" + state)
-    
-    outputRaster = outDB + os.sep + "MapunitRaster_10m_" + state
-    surveyInfo = ''
-    iRaster = 10
-    UpdateMetadata(outDB, outputRaster, surveyInfo, iRaster)
-
-except Exception as e:
-    arcpy.AddError(e)
-    
-
-
