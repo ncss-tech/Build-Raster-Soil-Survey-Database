@@ -335,7 +335,7 @@ def StateNames():
         arcpy.AddError("\tFailed to create list of state abbreviations (CreateStateList)", 2)
         return stDict
 
-import arcpy, sys, os, traceback, datetime
+import arcpy, sys, os, traceback, datetime, shutil
 from arcpy import env
 import xml.etree.cElementTree as ET
 
@@ -349,6 +349,8 @@ try:
     ##set the snap raster environment
     loc = sys.argv[0]
     snap_dir = os.path.dirname(loc)
+    
+    table_dir = os.path.join(snap_dir, "SSURGO_template_data","soil_ra000","tabular")
     snap = os.path.join(snap_dir, "RSS_gSSURGO_snap.tif")
     # arcpy.AddMessage(snap)
     arcpy.env.snapRaster = snap
@@ -370,6 +372,10 @@ try:
     if RBdesc.meanCellHeight != 10.0 or RBdesc.meanCellWidth != 10.0:
         arcpy.env.cellSize = 10
 
+    rasters = [outDB + os.sep + "temp_raster_10m_" + state, outDB + os.sep + "MapunitRaster_10m_" + state]
+    for r in rasters:
+        if arcpy.Exists(r):
+            arcpy.management.Delete(r)
 
     sr = desc.spatialReference
     # arcpy.AddMessage(sr.GCS.name)
@@ -381,6 +387,7 @@ try:
         # no trannsformation needed
         arcpy.management.ProjectRaster(model_raster, outDB + os.sep + "temp_raster_10m_" + state, osr, "NEAREST", 10, None, None, None, None )
 
+            
     arcpy.management.CopyRaster(outDB + os.sep + "temp_raster_10m_" + state, outDB + os.sep + "MapunitRaster_10m_" + state, None, None, None, None, None, "32_BIT_UNSIGNED")
 
     arcpy.management.Delete(outDB + os.sep + "temp_raster_10m_" + state)
@@ -389,6 +396,24 @@ try:
     surveyInfo = ''
     iRaster = 10
     UpdateMetadata(outDB, outputRaster, surveyInfo, iRaster)
+    
+    # i = state.s.rfind("_")
+    # stabb = out[i-2:i]
+    db_dir= os.path.dirname(outDB)
+    tiff_pkg = os.path.join(db_dir, "RSS_" + state[:2])
+    os.mkdir(tiff_pkg)
+    dirs = ['spatial', 'tabular']
+    for d in dirs:
+        os.mkdir(os.path.join(tiff_pkg, d))
+    
+    arcpy.management.CopyRaster(outDB + os.sep + "MapunitRaster_10m_" + state, os.path.join(tiff_pkg, "spatial", "MapunitRaster_10m_" + state + '.tif' ), None, None, None, None, None, "32_BIT_UNSIGNED")
+    
+    os.chdir(table_dir)
+    for table in os.listdir(table_dir):
+        if not table.startswith("."):
+            dest = os.path.join(tiff_pkg, 'tabular',  table)
+            shutil.copy(table, dest)
+    
 
 except Exception as e:
     arcpy.AddError(e)
