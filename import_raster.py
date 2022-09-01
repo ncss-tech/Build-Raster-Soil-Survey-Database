@@ -399,20 +399,20 @@ try:
     
     # i = state.s.rfind("_")
     # stabb = out[i-2:i]
-    db_dir= os.path.dirname(outDB)
-    tiff_pkg = os.path.join(db_dir, "RSS_" + state[:2])
-    os.mkdir(tiff_pkg)
-    dirs = ['spatial', 'tabular']
-    for d in dirs:
-        os.mkdir(os.path.join(tiff_pkg, d))
+    # db_dir= os.path.dirname(outDB)
+    # tiff_pkg = os.path.join(db_dir, "RSS_" + state[:2])
+    # os.mkdir(tiff_pkg)
+    # dirs = ['spatial', 'tabular']
+    # for d in dirs:
+    #     os.mkdir(os.path.join(tiff_pkg, d))
     
-    arcpy.management.CopyRaster(outDB + os.sep + "MapunitRaster_10m_" + state, os.path.join(tiff_pkg, "spatial", "MapunitRaster_10m_" + state + '.tif' ), None, None, None, None, None, "32_BIT_UNSIGNED")
+    # arcpy.management.CopyRaster(outDB + os.sep + "MapunitRaster_10m_" + state, os.path.join(tiff_pkg, "spatial", "MapunitRaster_10m_" + state + '.tif' ), None, None, None, None, None, "32_BIT_UNSIGNED")
     
-    os.chdir(table_dir)
-    for table in os.listdir(table_dir):
-        if not table.startswith("."):
-            dest = os.path.join(tiff_pkg, 'tabular',  table)
-            shutil.copy(table, dest)
+    # os.chdir(table_dir)
+    # for table in os.listdir(table_dir):
+    #     if not table.startswith("."):
+    #         dest = os.path.join(tiff_pkg, 'tabular',  table)
+    #         shutil.copy(table, dest)
     
 
 except Exception as e:
